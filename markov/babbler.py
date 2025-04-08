@@ -1,3 +1,7 @@
+# Sun Lee Assignment 2
+# CS317 spring 2025
+
+
 import random
 import glob
 import sys
@@ -111,6 +115,28 @@ class Babbler:
         and that any n-grams that stops a sentence should be followed by the
         special symbol 'EOL' in the state transition table. 'EOL' is short for 'end of line'; since it is capitalized and all our input texts are lower-case, it will be unambiguous.
         """
+        words = sentence.split() # split the sentence into words using spaces as delimiters
+
+        if len(words) < self.n:
+            print("Sentence is too short to be processed")
+            return
+        
+        #starter
+        starter_ngram = ' '.join(words[:self.n]) # join the first n words with spaces to form the starter ngram
+        self.starters.append(starter_ngram) # add the starter ngram to the starters list
+
+        for i in range(len(words) - self.n): # iterate through the words to create n-grams
+            ngram = ' '.join(words[i:i + self.n]) # join the current n words with spaces to form the ngram
+            next_word = words[i + self.n]
+            if ngram not in self.brainGraph: # if the ngram is not already in the graph, add it
+                self.brainGraph[ngram] = [] # initialize the value as an empty list
+            self.brainGraph[ngram].append(next_word) # add the next word to the list of successors for the ngram
+
+        final_ngram = ' '.join(words[-self.n:]) # join the last n words with spaces to form the final ngram
+        self.stoppers.append(final_ngram) # add the final ngram to the stoppers list
+        if final_ngram not in self.brainGraph:
+            self.brainGraph[final_ngram] = []
+        self.brainGraph[final_ngram].append('EOL') # add 'EOL' as a successor for the final ngram
 
         pass #The pass statement is used as a placeholder for future code. When the pass statement is executed, nothing happens, but you avoid getting an error when empty code is not allowed. Empty code is not allowed in loops, function definitions, class definitions, or in if statements.
 
@@ -121,6 +147,8 @@ class Babbler:
         The resulting list may contain duplicates, because one n-gram may start
         multiple sentences. Probably a one-line method.
         """
+        return self.starters # return the starters list, which contains all the n-grams that start sentences we've seen
+    
         pass
     
 
@@ -130,6 +158,7 @@ class Babbler:
         The resulting value may contain duplicates, because one n-gram may stop
         multiple sentences. Probably a one-line method.
         """
+        return self.stoppers
         pass
 
 
@@ -145,7 +174,7 @@ class Babbler:
         If n=3, then the n-gram 'the dog dances' is followed by 'quickly' one time, and 'with' two times.
         If the given state never occurs, return an empty list.
         """
-
+        return self.brainGraph.get(ngram, [])
         pass
     
 
@@ -154,7 +183,7 @@ class Babbler:
         Return all the possible n-grams (sequences of n words), that we have seen across all sentences.
         Probably a one-line method.
         """
-
+        return list(self.brainGraph.keys())
         pass
 
     
@@ -165,7 +194,7 @@ class Babbler:
         because ngrams with no successor words must not have occurred in the training sentences.
         Probably a one-line method.
         """
-
+        return ngram in self.brainGraph and len(self.brainGraph[ngram]) > 0
         pass
     
     
@@ -180,7 +209,10 @@ class Babbler:
         and we call get_random_next_word() for the state 'the dog dances',
         we should get 'quickly' about 1/3 of the time, and 'with' 2/3 of the time.
         """
-
+        successors = self.get_successors(ngram)
+        if not successors:
+            return None
+        return random.choice(successors) # randomly pick a word from the list of successors for the given ngram
         pass
     
 
@@ -198,7 +230,19 @@ class Babbler:
             Our example state is now: 'b c d' 
         6: Repeat from step 2.
         """
+        state = random.choice(self.starters) # pick a random starter ngram from the starters list
+        words = state.split() # split the state into words using spaces as delimiters
 
+        while True:
+            successor = self.get_random_successor(state) # get a random successor for the current state
+            if successor == 'EOL' or successor is None:
+                break
+            words.append(successor) # add the successor to the end of the sentence
+            state_words = state.split()[1:] + [successor] # update the state by removing the first word and adding the successor
+            state = ' '.join(state_words) # join the updated state words with spaces to form the new state
+
+        return ' '.join(words) 
+    
         pass
             
 
